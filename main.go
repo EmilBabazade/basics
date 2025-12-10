@@ -9,6 +9,60 @@ import (
 )
 
 func main() {
+	// comment this out to start the jet engine
+	rl.SetTargetFPS(60)
+
+	// inputMovement()
+	collisions()
+}
+
+func collisions() {
+	var screenWidth int32 = 1720
+	var screenHeight int32 = 880
+	rl.InitWindow(screenWidth, screenHeight, "Base")
+	rl.SetExitKey(rl.KeyEscape)
+
+	obstaclePos := rl.Vector2{X: 500, Y: 400}
+	playerRadius := float32(50)
+	obstacleRadius := float32(30)
+	rect := rl.NewRectangle(0, 0, 100, 200)
+	rect2 := rl.NewRectangle(800, 500, 200, 300)
+
+	for !rl.WindowShouldClose() {
+		// update
+		playerPos := rl.GetMousePosition()
+		rect.X = float32(rl.GetMouseX())
+		rect.Y = float32(rl.GetMouseY())
+		collisionRect := rl.GetCollisionRec(rect, rect2)
+
+		// draw
+		rl.BeginDrawing()
+
+		// rl.DrawCircleV(playerPos, playerRadius, rl.White)
+		rl.DrawCircleV(obstaclePos, obstacleRadius, rl.Red)
+
+		rl.DrawRectangleRec(rect, rl.Blue)
+		rl.DrawRectangleRec(rect2, rl.Green)
+
+		if rl.CheckCollisionCircles(playerPos, playerRadius, obstaclePos, obstacleRadius) {
+			// rl.DrawText("COLLIDING", 200, 300, 100, rl.Red)
+		}
+
+		if collisionRect.Width > 0 && collisionRect.Height > 0 {
+			rl.DrawRectangleRec(collisionRect, rl.Red)
+		}
+
+		// if rl.CheckCollisionCircleRec(playerPos, playerRadius, rect) {
+		// 	rl.DrawText("COLLIDING", 200, 300, 100, rl.Blue)
+		// }
+
+		rl.ClearBackground(rl.Black)
+		rl.DrawFPS(0, 0)
+		rl.EndDrawing()
+	}
+}
+
+func inputMovement() {
 	var screenWidth int32 = 1720
 	var screenHeight int32 = 880
 	rl.InitWindow(screenWidth, screenHeight, "Base")
