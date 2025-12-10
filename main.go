@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"os"
 	"path"
@@ -10,7 +9,10 @@ import (
 )
 
 func main() {
-	rl.InitWindow(1720, 880, "Base")
+	var screenWidth int32 = 1720
+	var screenHeight int32 = 880
+	rl.InitWindow(screenWidth, screenHeight, "Base")
+	rl.SetExitKey(rl.KeyEscape)
 
 	ship, err := loadTexture(path.Join("assets", "spaceship.png"))
 	if err != nil {
@@ -18,19 +20,36 @@ func main() {
 		os.Exit(1)
 	}
 
-	pos := rl.Vector2{
-		X: 0,
-		Y: 0,
-	}
+	pos := rl.Vector2{X: 0, Y: 0}
+	var speed float32 = 500.0
 
 	for !rl.WindowShouldClose() {
-		rl.BeginDrawing()
-		rl.ClearBackground(rl.Black)
+		// input
+		direction := getDirection()
+
+		// update
 		dt := rl.GetFrameTime()
 
-		rl.DrawTextureV(ship, pos, rl.White)
-		pos.X = pos.X + 10*dt
+		if pos.X <= 0 {
+			direction.X = 1
+		} else if pos.X >= float32(screenWidth)-float32(ship.Width) {
+			direction.X = -1
+		}
 
+		if pos.Y <= 0 {
+			direction.Y = 1
+		} else if pos.Y >= float32(screenHeight)-float32(ship.Height) {
+			direction.Y = -1
+		}
+		direction = rl.Vector2Normalize(direction)
+
+		pos.X += direction.X * speed * dt
+		pos.Y += direction.Y * speed * dt
+
+		// draw
+		rl.BeginDrawing()
+		rl.ClearBackground(rl.Black)
+		rl.DrawTextureV(ship, pos, rl.White)
 		rl.DrawFPS(0, 0)
 		rl.EndDrawing()
 	}
@@ -38,26 +57,24 @@ func main() {
 	rl.CloseWindow()
 }
 
-func loadImage(path string) (*rl.Image, error) {
-	image := rl.LoadImage(path)
-	if image.Data == nil {
-		return nil, fmt.Errorf("file not found at path %s", path)
-	}
-	return image, nil
-}
+func getDirection() rl.Vector2 {
+	direction := rl.Vector2{}
 
-func loadFont(path string) (rl.Font, error) {
-	font := rl.LoadFont(path)
-	if font.Chars == nil {
-		return rl.Font{}, fmt.Errorf("file not found at path %s", path)
+	if rl.IsKeyDown(rl.KeyA) || rl.IsKeyDown(rl.KeyLeft) {
+		direction.X = -1
+	} else if rl.IsKeyDown(rl.KeyD) || rl.IsKeyDown(rl.KeyRight) {
+		direction.X = 1
+	} else {
+		direction.X = 0
 	}
-	return font, nil
-}
 
-func loadTexture(path string) (rl.Texture2D, error) {
-	texture := rl.LoadTexture(path)
-	if texture.Width == 0 && texture.Height == 0 {
-		return rl.Texture2D{}, fmt.Errorf("file not found at path %s", path)
+	if rl.IsKeyDown(rl.KeyW) || rl.IsKeyDown(rl.KeyUp) {
+		direction.Y = -1
+	} else if rl.IsKeyDown(rl.KeyS) || rl.IsKeyDown(rl.KeyDown) {
+		direction.Y = 1
+	} else {
+		direction.Y = 0
 	}
-	return texture, nil
+
+	return direction
 }
