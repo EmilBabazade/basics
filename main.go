@@ -1,26 +1,81 @@
 package main
 
 import (
+	"image/color"
 	"log"
+	"math/rand"
 	"os"
 	"path"
 
 	rl "github.com/gen2brain/raylib-go/raylib"
 )
 
+var (
+	screenWidth  int32 = 1720
+	screenHeight int32 = 880
+)
+
 func main() {
-	// comment this out to start the jet engine
-	rl.SetTargetFPS(60)
+	rl.InitWindow(screenWidth, screenHeight, "Base")
+	rl.SetExitKey(rl.KeyEscape)
+	rl.SetTargetFPS(60) // comment this out to start the jet engine
 
 	// inputMovement()
-	collisions()
+	// collisions()
+	camera()
+}
+
+func camera() {
+	type Circle struct {
+		position rl.Vector2
+		radius   float32
+		color    color.RGBA
+	}
+	circles := make([]Circle, 0, 100)
+	for range 100 {
+		x := rand.Intn(2000-(-2000)+1) + (-2000)
+		y := rand.Intn(1000-(-1000)+1) + (-1000)
+		radius := rand.Intn(200-50+1) + 50
+		color := color.RGBA{R: uint8(rand.Intn(255)), G: uint8(rand.Intn(255)), B: uint8(rand.Intn(255)), A: uint8(rand.Intn(255))}
+		c := Circle{
+			position: rl.Vector2{X: float32(x), Y: float32(y)},
+			radius:   float32(radius),
+			color:    color,
+		}
+		circles = append(circles, c)
+	}
+
+	player := Circle{
+		position: rl.Vector2{X: 0, Y: 0},
+		radius:   50,
+		color:    rl.Red,
+	}
+	playerSpeed := float32(400)
+
+	for !rl.WindowShouldClose() {
+		// update
+		direction := getDirection()
+		direction = rl.Vector2Normalize(direction)
+
+		dt := rl.GetFrameTime()
+		player.position.X += direction.X * playerSpeed * float32(dt)
+		player.position.Y += direction.Y * playerSpeed * float32(dt)
+		// draw
+		rl.BeginDrawing()
+		rl.ClearBackground(rl.White)
+
+		for _, c := range circles {
+			rl.DrawCircleV(c.position, c.radius, c.color)
+		}
+		rl.DrawCircleV(player.position, player.radius, player.color)
+
+		rl.DrawFPS(0, 0)
+
+		rl.EndDrawing()
+	}
 }
 
 func collisions() {
-	var screenWidth int32 = 1720
-	var screenHeight int32 = 880
-	rl.InitWindow(screenWidth, screenHeight, "Base")
-	rl.SetExitKey(rl.KeyEscape)
 
 	obstaclePos := rl.Vector2{X: 500, Y: 400}
 	playerRadius := float32(50)
