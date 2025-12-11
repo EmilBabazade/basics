@@ -4,15 +4,14 @@ import (
 	"image/color"
 	"log"
 	"math/rand"
-	"os"
 	"path"
 
 	rl "github.com/gen2brain/raylib-go/raylib"
 )
 
 var (
-	screenWidth  int32 = 1720
-	screenHeight int32 = 880
+	screenWidth  int32 = 1520
+	screenHeight int32 = 680
 )
 
 func main() {
@@ -22,10 +21,15 @@ func main() {
 
 	// inputMovement()
 	// collisions()
-	camera()
+	//cameraStuff()
+	audioStuff()
 }
 
-func camera() {
+func audioStuff() {
+
+}
+
+func cameraStuff() {
 	type Circle struct {
 		position rl.Vector2
 		radius   float32
@@ -33,14 +37,19 @@ func camera() {
 	}
 	circles := make([]Circle, 0, 100)
 	for range 100 {
-		x := rand.Intn(2000-(-2000)+1) + (-2000)
-		y := rand.Intn(1000-(-1000)+1) + (-1000)
-		radius := rand.Intn(200-50+1) + 50
-		color := color.RGBA{R: uint8(rand.Intn(255)), G: uint8(rand.Intn(255)), B: uint8(rand.Intn(255)), A: uint8(rand.Intn(255))}
+		x := getRandInt(-2000, 2000)
+		y := getRandInt(-1000, 1000)
+		radius := getRandInt(50, 200)
+		clr := color.RGBA{
+			R: uint8(rand.Intn(255)),
+			G: uint8(rand.Intn(255)),
+			B: uint8(rand.Intn(255)),
+			A: uint8(rand.Intn(255)),
+		}
 		c := Circle{
 			position: rl.Vector2{X: float32(x), Y: float32(y)},
 			radius:   float32(radius),
-			color:    color,
+			color:    clr,
 		}
 		circles = append(circles, c)
 	}
@@ -52,16 +61,41 @@ func camera() {
 	}
 	playerSpeed := float32(400)
 
+	camera := rl.Camera2D{
+		Offset:   rl.Vector2{X: float32(screenWidth / 2), Y: float32(screenHeight / 2)},
+		Target:   player.position,
+		Rotation: 0,
+		Zoom:     1,
+	}
+
 	for !rl.WindowShouldClose() {
 		// update
 		direction := getDirection()
 		direction = rl.Vector2Normalize(direction)
 
 		dt := rl.GetFrameTime()
-		player.position.X += direction.X * playerSpeed * float32(dt)
-		player.position.Y += direction.Y * playerSpeed * float32(dt)
+		player.position.X += direction.X * playerSpeed * dt
+		player.position.Y += direction.Y * playerSpeed * dt
+
+		camera.Target = player.position
+
+		rotateDirection := 0
+		if rl.IsKeyDown(rl.KeyD) {
+			rotateDirection = 1
+		} else if rl.IsKeyDown(rl.KeyA) {
+			rotateDirection = -1
+		}
+		camera.Rotation += dt * float32(rotateDirection) * 50
+		camera.Zoom += dt * rl.GetMouseWheelMove() * 2
+		if camera.Zoom <= 0.35 {
+			camera.Zoom = 0.35
+		} else if camera.Zoom >= 3 {
+			camera.Zoom = 3
+		}
+
 		// draw
 		rl.BeginDrawing()
+		rl.BeginMode2D(camera)
 		rl.ClearBackground(rl.White)
 
 		for _, c := range circles {
@@ -71,8 +105,13 @@ func camera() {
 
 		rl.DrawFPS(0, 0)
 
+		rl.EndMode2D()
 		rl.EndDrawing()
 	}
+}
+
+func getRandInt(min int, max int) int {
+	return rand.Intn(max-min+1) + min
 }
 
 func collisions() {
@@ -126,7 +165,6 @@ func inputMovement() {
 	ship, err := loadTexture(path.Join("assets", "spaceship.png"))
 	if err != nil {
 		log.Fatal(err)
-		os.Exit(1)
 	}
 
 	pos := rl.Vector2{X: 0, Y: 0}
@@ -169,9 +207,11 @@ func inputMovement() {
 func getDirection() rl.Vector2 {
 	direction := rl.Vector2{}
 
-	if rl.IsKeyDown(rl.KeyA) || rl.IsKeyDown(rl.KeyLeft) {
+	//if rl.IsKeyDown(rl.KeyA) || rl.IsKeyDown(rl.KeyLeft) {
+	if rl.IsKeyDown(rl.KeyLeft) {
 		direction.X = -1
-	} else if rl.IsKeyDown(rl.KeyD) || rl.IsKeyDown(rl.KeyRight) {
+		//} else if rl.IsKeyDown(rl.KeyD) || rl.IsKeyDown(rl.KeyRight) {
+	} else if rl.IsKeyDown(rl.KeyRight) {
 		direction.X = 1
 	} else {
 		direction.X = 0
