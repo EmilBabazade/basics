@@ -22,11 +22,80 @@ func main() {
 	// inputMovement()
 	// collisions()
 	//cameraStuff()
-	audioStuff()
+	//audioStuff()
+	classStuff()
+}
+
+type Player struct {
+	position rl.Vector2
+	texture  rl.Texture2D
+	width    int32
+	height   int32
+}
+
+func (p Player) draw() {
+	rl.DrawTextureV(p.texture, p.position, rl.White)
+}
+
+func newPlayer(pos rl.Vector2, texture rl.Texture2D) Player {
+	return Player{
+		position: pos,
+		texture:  texture,
+		width:    texture.Width,
+		height:   texture.Height,
+	}
+}
+
+func classStuff() {
+	texture, err := loadTexture(path.Join("assets", "spaceship.png"))
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	player := newPlayer(rl.Vector2{}, texture)
+
+	for !rl.WindowShouldClose() {
+		// TODO: call p.update() here
+
+		rl.BeginDrawing()
+		rl.ClearBackground(rl.Black)
+
+		player.draw()
+
+		rl.EndDrawing()
+	}
+
+	rl.CloseWindow()
 }
 
 func audioStuff() {
+	rl.InitAudioDevice()
+	laserSound, err := loadSound(path.Join("assets", "laser.wav"))
+	if err != nil {
+		log.Fatal(err)
+	}
 
+	musicStream, err := loadMusicStream(path.Join("assets", "music.wav"))
+	if err != nil {
+		log.Fatal(err)
+	}
+	rl.PlayMusicStream(musicStream)
+
+	for !rl.WindowShouldClose() {
+		rl.UpdateMusicStream(musicStream)
+
+		rl.BeginDrawing()
+		rl.ClearBackground(rl.Black)
+
+		if rl.IsKeyPressed(rl.KeySpace) {
+			rl.PlaySound(laserSound)
+		}
+
+		rl.EndDrawing()
+	}
+	rl.UnloadMusicStream(musicStream)
+	rl.CloseAudioDevice()
+	rl.CloseWindow()
 }
 
 func cameraStuff() {
